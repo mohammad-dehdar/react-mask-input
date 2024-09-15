@@ -12,7 +12,7 @@ function Parent() {
     setLoading(true);
 
     if (value.trim() === "") {
-      setSuggestedValues([]);
+      setSuggestedValues("");
       setLoading(false);
       return;
     }
@@ -25,12 +25,18 @@ function Parent() {
       setSuggestedValues(filteredCities.slice(0, 5));
       setLoading(false); 
     }, 500);
+    //  تأخیر مصنوعی 500 میلی‌ثانیه‌ای برای شبیه‌سازی یک درخواست ایجاد می‌کند
+    // حداکثر 5 پیشنهاد را نشان می‌دهد که اگر تعداد دیتا زیاد بود تمام دیتا را به ما پیشنهاد ندهد
   };
 
   const handleSelection = (selectedCity) => {
     setInputValue(selectedCity);
     setSuggestedValues([]);
   };
+
+  const deletHandler = () => {
+    setInputValue("");
+  }
 
   return (
     <div className="p-4 max-w-md mx-auto">
@@ -39,6 +45,7 @@ function Parent() {
         suggestedValues={suggestedValues}
         onInputChange={handleInputChange}
         onSelection={handleSelection}
+        deletHandler={deletHandler}
         loading={loading}
       />
     </div>

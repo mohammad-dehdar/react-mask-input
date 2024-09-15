@@ -1,20 +1,47 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ThreeDots } from "react-loader-spinner";
 
-function SearchInput({ inputValue, suggestedValues, onInputChange, onSelection,loading }) {
+function SearchInput({ inputValue, suggestedValues, onInputChange, onSelection, loading }) {
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
+
   const handleChange = (e) => {
     onInputChange(e.target.value);
+    setActiveIndex(-1);
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && suggestedValues.length > 0) {
-      onSelection(suggestedValues[0]);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prevIndex) =>
+        prevIndex < suggestedValues.length - 1 ? prevIndex + 1 : prevIndex
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : -1));
+    } else if (e.key === "Enter") {
+      if (activeIndex >= 0 && activeIndex < suggestedValues.length) {
+        onSelection(suggestedValues[activeIndex]);
+      } else if (suggestedValues.length > 0) {
+        onSelection(suggestedValues[0]);
+      }
+    } else if (e.key === "Escape") {
+      inputRef.current.blur();
     }
   };
+
+  useEffect(() => {
+    if (listRef.current && activeIndex >= 0) {
+      const activeElement = listRef.current.children[activeIndex];
+      activeElement.scrollIntoView({ block: "nearest" });
+    }
+  }, [activeIndex]);
 
   return (
     <div className="relative">
       <input
+        ref={inputRef}
         type="text"
         placeholder="Search cities..."
         value={inputValue}
@@ -25,6 +52,7 @@ function SearchInput({ inputValue, suggestedValues, onInputChange, onSelection,l
         aria-controls="suggestions-list"
         role="combobox"
         aria-expanded={suggestedValues.length > 0}
+        aria-activedescendant={activeIndex >= 0 ? `suggestion-${activeIndex}` : undefined}
       />
       {loading ? (
         <div className="absolute left-0 right-0 top-full mt-2 flex justify-center">
@@ -40,12 +68,21 @@ function SearchInput({ inputValue, suggestedValues, onInputChange, onSelection,l
           />
         </div>
       ) : (inputValue && suggestedValues.length > 0 && (
-        <ul id="suggestions-list" className="absolute w-full bg-white border mt-1 rounded shadow-lg">
+        <ul
+          id="suggestions-list"
+          ref={listRef}
+          className="absolute w-full bg-white border mt-1 rounded shadow-lg max-h-60 overflow-y-auto"
+        >
           {suggestedValues.map((suggestion, index) => (
             <li
               key={index}
-              className="p-2 hover:bg-gray-100 cursor-pointer"
+              id={`suggestion-${index}`}
+              className={`p-2 cursor-pointer transition duration-150 ease-in-out ${index === activeIndex ? 'bg-green-100' : 'hover:bg-green-50'
+                }`}
               onClick={() => onSelection(suggestion)}
+              onMouseEnter={() => setActiveIndex(index)}
+              role="option"
+              aria-selected={index === activeIndex}
             >
               {suggestion}
             </li>
@@ -54,6 +91,6 @@ function SearchInput({ inputValue, suggestedValues, onInputChange, onSelection,l
       ))}
     </div>
   );
-};
+}
 
 export default SearchInput;
