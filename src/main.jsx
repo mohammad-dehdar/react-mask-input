@@ -3,12 +3,21 @@ import { ThreeDots } from "react-loader-spinner";
 
 function SearchInput({ inputValue, suggestedValues, onInputChange, onSelection, loading }) {
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [error, setError] = useState("");
   const inputRef = useRef(null);
   const listRef = useRef(null);
 
+  const isEnglish = (text) => /^[A-Za-z\s]*$/.test(text);
+
   const handleChange = (e) => {
-    onInputChange(e.target.value);
-    setActiveIndex(-1);
+    const newValue = e.target.value;
+    if (isEnglish(newValue)) {
+      onInputChange(newValue);
+      setActiveIndex(-1);
+      setError("");
+    } else {
+      setError("Please type in English only!");
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -47,13 +56,16 @@ function SearchInput({ inputValue, suggestedValues, onInputChange, onSelection, 
         value={inputValue}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        className="w-full p-2 border rounded focus:outline-none"
+        className={`w-full p-2 border-2 rounded focus:outline-none ${error ? 'border-red-500' : ''}`}
         aria-autocomplete="list"
         aria-controls="suggestions-list"
         role="combobox"
         aria-expanded={suggestedValues.length > 0}
         aria-activedescendant={activeIndex >= 0 ? `suggestion-${activeIndex}` : undefined}
       />
+      {error && (
+        <p className="text-white bg-rose-600 py-[4px] px-1 rounded-sm w-fit text-sm mt-1">{error}</p>
+      )}
       {loading ? (
         <div className="absolute left-0 right-0 top-full mt-2 flex justify-center">
           <ThreeDots
@@ -68,8 +80,8 @@ function SearchInput({ inputValue, suggestedValues, onInputChange, onSelection, 
           />
         </div>
       ) : (inputValue && suggestedValues.length > 0 && (
-        <ul
-          id="suggestions-list"
+        <ul 
+          id="suggestions-list" 
           ref={listRef}
           className="absolute w-full bg-white border mt-1 rounded shadow-lg max-h-60 overflow-y-auto"
         >
@@ -77,8 +89,9 @@ function SearchInput({ inputValue, suggestedValues, onInputChange, onSelection, 
             <li
               key={index}
               id={`suggestion-${index}`}
-              className={`p-2 cursor-pointer transition duration-150 ease-in-out ${index === activeIndex ? 'bg-green-100' : 'hover:bg-green-50'
-                }`}
+              className={`p-2 cursor-pointer transition duration-150 ease-in-out ${
+                index === activeIndex ? 'bg-green-100' : 'hover:bg-green-50'
+              }`}
               onClick={() => onSelection(suggestion)}
               onMouseEnter={() => setActiveIndex(index)}
               role="option"
